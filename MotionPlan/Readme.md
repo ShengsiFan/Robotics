@@ -4,9 +4,9 @@
 
 一种六轴操作臂的正逆运动学及轨迹规划，机器人外观及结构示意图如下
 
-<img src="C:\Users\fanss\AppData\Roaming\Typora\typora-user-images\image-20200714205430597.png" alt="image-20200714205430597" style="zoom:50%;" />
+![Alt text](https://github.com/ShengsiFan/Robotics/raw/master/MotionPlan/image-20200714205430597.png)
 
-<img src="C:\Users\fanss\AppData\Roaming\Typora\typora-user-images\image-20200714205517421.png" alt="image-20200714205517421" style="zoom:50%;" />
+<img src="D:\Material\STU\PROGRAMMING\Robotics\MotionPlan\image-20200714205517421.png" alt="image-20200714205517421" style="zoom:50%;" />
 
 目前可实现的轨迹种类：
 
