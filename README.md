@@ -11,4 +11,4 @@
 
 所用机器人简图如下：
 
-![哦豁](https://github.com/ShengsiFan/Robotics/raw/master/readmeimage/image-20200714205430597.png)
+![哦豁](https://github.com/ShengsiFan/Robotics/raw/master/image-20200714205430597.png)
