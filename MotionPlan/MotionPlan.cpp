@@ -1,4 +1,4 @@
-ï»¿#include <iostream>
+#include <iostream>
 #include <fstream>
 #include "MotionPlan.h"
 #include "HLrobotconfig.h"
@@ -11,7 +11,7 @@ using namespace HLRobot;
 using namespace Eigen;
 
 /********************************************************************
-ABSTRACT:	æ„é€ å‡½æ•°
+ABSTRACT:	¹¹Ôìº¯Êı
 
 INPUTS:		<none>
 
@@ -19,7 +19,6 @@ OUTPUTS:	<none>
 
 RETURN:		<none>
 ***********************************************************************/
-
 CHLMotionPlan::CHLMotionPlan()
 {
 	for (int i = 0; i < 6; i++)
@@ -45,7 +44,7 @@ CHLMotionPlan::CHLMotionPlan()
 }
 
 /********************************************************************
-ABSTRACT:	ææ„å‡½æ•°
+ABSTRACT:	Îö¹¹º¯Êı
 
 INPUTS:		<none>
 
@@ -59,84 +58,79 @@ CHLMotionPlan::~CHLMotionPlan()
 }
 
 /********************************************************************
-ABSTRACT:	è®¾ç½®é‡‡æ ·æ—¶é—´
+ABSTRACT:	³õÊ¼»¯
 
-INPUTS:		sampleTime			é‡‡æ ·æ—¶é—´ï¼Œå•ä½S
-
+INPUTS:		sampleTime			²ÉÑùÊ±¼ä£¬µ¥Î»S
+			vel			ËÙ¶È£¬µ¥Î»m/s
+			acc			¼ÓËÙ¶È£¬µ¥Î»m/s/s
 OUTPUTS:	<none>
 
 RETURN:		<none>
 ***********************************************************************/
-void CHLMotionPlan::SetSampleTime(double sampleTime)
+void CHLMotionPlan::Init(double sampleTime, int VLevel)
 {
-	if (sampleTime < 0.001)
-	{
+	if (sampleTime < 0.001) {
 		mSampleTime = 0.001;
 	}
-	else
-	{
+	else {
 		mSampleTime = sampleTime;
+	}
+	if (VLevel == 1) {
+		mVel = 5;
+		mAcc = 5;
+		mDec = 5;
+		LVel = 0.05;
+		LAcc = 0.05;
+	}
+	else if (VLevel == 3) {
+		mVel = 20;
+		mAcc = 20;
+		mDec = 20;
+		LVel = 0.3;
+		LAcc = 0.3;
+	}
+	else {
+		mVel = 10;
+		mAcc = 10;
+		mDec = 10;
+		LVel = 0.1;
+		LAcc = 0.1;
 	}
 }
 
 /********************************************************************
-ABSTRACT:	è®¾ç½®è¿åŠ¨å‚æ•°
+ABSTRACT:	»úÆ÷ÈË¹Ø½Ú¿Õ¼äÌİĞÎËÙ¶È¹æ»®
 
-INPUTS:		vel			é€Ÿåº¦ï¼Œå•ä½m/s
-			acc			åŠ é€Ÿåº¦ï¼Œå•ä½m/s/s
-			dec			å‡é€Ÿåº¦ï¼Œå•ä½m / s / s
+INPUTS:		startPos-ÆğÊ¼µãÎ»×Ë(x,y,z,yaw,pitch,roll)£¬endPos-ÖÕÖ¹µãÎ»×Ë
 
 OUTPUTS:	<none>
 
 RETURN:		<none>
 ***********************************************************************/
-void CHLMotionPlan::SetProfile(double vel, double acc, double dec)
-{
-	mVel = vel;
-	mAcc = acc;
-	mDec = dec;
-}
-
-void CHLMotionPlan::SetLine(double v, double a)
-{
-	LVel = v;
-	LAcc = a;
-}
-
-/********************************************************************
-ABSTRACT:	è®¾ç½®è§„åˆ’çš„èµ·å§‹å•ä½å’Œç»“æŸç‚¹ä½
-
-INPUTS:		startPos			èµ·å§‹ç‚¹ä½ç¬›å¡å°”åæ ‡
-			endPos				ç»“æŸç‚¹ä½ç¬›å¡å°”åæ ‡
-
-OUTPUTS:	<none>
-
-RETURN:		<none>
-***********************************************************************/
-void CHLMotionPlan::SetPlanPoints(PosStruct startPos, PosStruct endPos)
+void CHLMotionPlan::JointSpacePlan(PosStruct startPos, PosStruct endPos)
 {
 	double startAngle[3], endAngle[3];
 
-	startAngle[0] = startPos.yaw   * PI / 180;
+	startAngle[0] = startPos.yaw * PI / 180;
 	startAngle[1] = startPos.pitch * PI / 180;
-	startAngle[2] = startPos.roll  * PI / 180;
+	startAngle[2] = startPos.roll * PI / 180;
 
-	endAngle[0] = endPos.yaw   * PI / 180;
+	endAngle[0] = endPos.yaw * PI / 180;
 	endAngle[1] = endPos.pitch * PI / 180;
-	endAngle[2] = endPos.roll  * PI / 180;
+	endAngle[2] = endPos.roll * PI / 180;
 
-	mStartMatrixData[0] =  cos(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) - sin(startAngle[0]) * sin(startAngle[2]);
+	mStartMatrixData[0] = cos(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) - sin(startAngle[0]) * sin(startAngle[2]);
 	mStartMatrixData[1] = -cos(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) - sin(startAngle[0]) * cos(startAngle[2]);
-	mStartMatrixData[2] =  cos(startAngle[0]) * sin(startAngle[1]);
+	mStartMatrixData[2] = cos(startAngle[0]) * sin(startAngle[1]);
 	mStartMatrixData[3] = startPos.x / 1000;
 
-	mStartMatrixData[4] =  sin(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) + cos(startAngle[0]) * sin(startAngle[2]);
+	mStartMatrixData[4] = sin(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) + cos(startAngle[0]) * sin(startAngle[2]);
 	mStartMatrixData[5] = -sin(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) + cos(startAngle[0]) * cos(startAngle[2]);
-	mStartMatrixData[6] =  sin(startAngle[0]) * sin(startAngle[1]);
+	mStartMatrixData[6] = sin(startAngle[0]) * sin(startAngle[1]);
 	mStartMatrixData[7] = startPos.y / 1000;
 
 	mStartMatrixData[8] = -sin(startAngle[1]) * cos(startAngle[2]);
-	mStartMatrixData[9] =  sin(startAngle[1]) * sin(startAngle[2]);
+	mStartMatrixData[9] = sin(startAngle[1]) * sin(startAngle[2]);
 	mStartMatrixData[10] = cos(startAngle[1]);
 	mStartMatrixData[11] = startPos.z / 1000;
 
@@ -145,18 +139,18 @@ void CHLMotionPlan::SetPlanPoints(PosStruct startPos, PosStruct endPos)
 	mStartMatrixData[14] = 0;
 	mStartMatrixData[15] = 1;
 
-	mEndMatrixData[0] =  cos(endAngle[0]) * cos(endAngle[1]) * cos(endAngle[2]) - sin(endAngle[0]) * sin(endAngle[2]);
+	mEndMatrixData[0] = cos(endAngle[0]) * cos(endAngle[1]) * cos(endAngle[2]) - sin(endAngle[0]) * sin(endAngle[2]);
 	mEndMatrixData[1] = -cos(endAngle[0]) * cos(endAngle[1]) * sin(endAngle[2]) - sin(endAngle[0]) * cos(endAngle[2]);
-	mEndMatrixData[2] =  cos(endAngle[0]) * sin(endAngle[1]);
+	mEndMatrixData[2] = cos(endAngle[0]) * sin(endAngle[1]);
 	mEndMatrixData[3] = endPos.x / 1000;
 
-	mEndMatrixData[4] =  sin(endAngle[0]) * cos(endAngle[1]) * cos(endAngle[2]) + cos(endAngle[0]) * sin(endAngle[2]);
+	mEndMatrixData[4] = sin(endAngle[0]) * cos(endAngle[1]) * cos(endAngle[2]) + cos(endAngle[0]) * sin(endAngle[2]);
 	mEndMatrixData[5] = -sin(endAngle[0]) * cos(endAngle[1]) * sin(endAngle[2]) + cos(endAngle[0]) * cos(endAngle[2]);
-	mEndMatrixData[6] =  sin(endAngle[0]) * sin(endAngle[1]);
+	mEndMatrixData[6] = sin(endAngle[0]) * sin(endAngle[1]);
 	mEndMatrixData[7] = endPos.y / 1000;
 
 	mEndMatrixData[8] = -sin(endAngle[1]) * cos(endAngle[2]);
-	mEndMatrixData[9] =  sin(endAngle[1]) * sin(endAngle[2]);
+	mEndMatrixData[9] = sin(endAngle[1]) * sin(endAngle[2]);
 	mEndMatrixData[10] = cos(endAngle[1]);
 	mEndMatrixData[11] = endPos.z / 1000;
 
@@ -166,7 +160,6 @@ void CHLMotionPlan::SetPlanPoints(PosStruct startPos, PosStruct endPos)
 	mEndMatrixData[15] = 1;
 
 	double angle[6] = { 0 };
-	//HLRobot::SetRobotPos(startPos.x, startPos.y, startPos.z, startPos.yaw, startPos.pitch, startPos.roll, startPos.config);
 	HLRobot::GetJointAngles(mStartMatrixData, angle);
 
 	mJointAngleBegin[0] = angle[0];
@@ -176,7 +169,6 @@ void CHLMotionPlan::SetPlanPoints(PosStruct startPos, PosStruct endPos)
 	mJointAngleBegin[4] = angle[4];
 	mJointAngleBegin[5] = angle[5];
 
-	//HLRobot::SetRobotEndPos(endPos.x, endPos.y, endPos.z, endPos.yaw, endPos.pitch, endPos.roll, endPos.config);
 	HLRobot::GetJointAngles(mEndMatrixData, angle);
 	mJointAngleEnd[0] = angle[0];
 	mJointAngleEnd[1] = angle[1];
@@ -185,48 +177,25 @@ void CHLMotionPlan::SetPlanPoints(PosStruct startPos, PosStruct endPos)
 	mJointAngleEnd[4] = angle[4];
 	mJointAngleEnd[5] = angle[5];
 
-}
-
-/********************************************************************
-ABSTRACT:	è¿åŠ¨è½¨è¿¹è§„åˆ’éƒ¨åˆ†
-
-INPUTS:		pos						äºŒç»´ä½ç½®å‘é‡
-
-OUTPUTS:	pos						äºŒç»´ä½ç½®å‘é‡ï¼ˆç¬¬ä¸€ç»´ï¼šä½ç½®ä¸ªæ•°ï¼Œç¬¬äºŒç»´ï¼šæ¯ä¸ªè½´çš„å…³èŠ‚è§’åº¦ï¼Œå•ä½åº¦ï¼‰
-
-RETURN:		<none>
-***********************************************************************/
-
-/******
- * å‚è€ƒæ­¥éª¤
- * æ­¥éª¤1ï¼šåˆ›å»ºæ–‡ä»¶å¹¶å†™å…¥åˆå§‹è§’åº¦
- * æ­¥éª¤2ï¼šè®¡ç®—æ¯ä¸ªè½´æ—‹è½¬çš„è§’åº¦
- * æ­¥éª¤3ï¼šè®¡ç®—æ¯ä¸ªè½´ç§»åŠ¨åˆ°ç»ˆæ­¢ç‚¹æ‰€éœ€è¦æ—¶é—´
- * æ­¥éª¤4ï¼šæ ¹æ®é‡‡æ ·æ—¶é—´è®¡ç®—ç¦»æ•£ç‚¹ä½æ•°
- * æ­¥éª¤5ï¼šæ ¹æ®ç¦»æ•£ç‚¹ä½æ•°å¾—åˆ°æ¯åˆ»çš„å…³èŠ‚è§’æ•°å€¼
- * æ­¥éª¤6ï¼šå°†æ¯æ—¶åˆ»çš„å…³èŠ‚è§’æ•°å€¼å†™å…¥åˆ°æ–‡ä»¶
- */
-void CHLMotionPlan::GetPlanPoints()
-{
-	/* æ­¥éª¤1ï¼šåˆ›å»ºæ–‡ä»¶å¹¶å†™å…¥åˆå§‹è§’åº¦ */
-	ofstream outfile;               			//åˆ›å»ºæ–‡ä»¶
+	/* ²½Öè1£º´´½¨ÎÄ¼ş²¢Ğ´Èë³õÊ¼½Ç¶È */
+	ofstream outfile;               			//´´½¨ÎÄ¼ş
 	outfile.open("data.txt");
 	outfile << mJointAngleBegin[0] << "  "
-		    << mJointAngleBegin[1] << "  "
-		    << mJointAngleBegin[2] << "  "
-	    	<< mJointAngleBegin[3] << "  "
-		    << mJointAngleBegin[4] << "  "
-		    << mJointAngleBegin[5] << "  ";
-	outfile << endl;                           //ä¿å­˜åˆå§‹çš„æ—¶é—´ã€å…­ä¸ªå…³èŠ‚è§’åº¦
+		<< mJointAngleBegin[1] << "  "
+		<< mJointAngleBegin[2] << "  "
+		<< mJointAngleBegin[3] << "  "
+		<< mJointAngleBegin[4] << "  "
+		<< mJointAngleBegin[5] << "  ";
+	outfile << endl;                           //±£´æ³õÊ¼µÄÊ±¼ä¡¢Áù¸ö¹Ø½Ú½Ç¶È
 
-	double Tour[6] = { 0 };     //æ¯ä¸ªå…³èŠ‚éœ€è¦èµ°çš„è§’åº¦
-	double Time[6] = { 0 };     //æ¯ä¸ªå…³èŠ‚èµ°çš„æ—¶é—´ 
-	int PointNum[6] = { 0 };     //ç¦»æ•£ç‚¹ä½æ•°
-	double Acc[6] = { 0 };      //å„å…³èŠ‚çš„åŠ é€Ÿåº¦æ–¹å‘
+	double Tour[6] = { 0 };     //Ã¿¸ö¹Ø½ÚĞèÒª×ßµÄ½Ç¶È
+	double Time[6] = { 0 };     //Ã¿¸ö¹Ø½Ú×ßµÄÊ±¼ä 
+	int PointNum[6] = { 0 };     //ÀëÉ¢µãÎ»Êı
+	double Acc[6] = { 0 };      //¸÷¹Ø½ÚµÄ¼ÓËÙ¶È·½Ïò
 	for (int i = 0; i < 6; i++)
 	{
-		/* æ­¥éª¤2ï¼šè®¡ç®—æ¯ä¸ªè½´æ—‹è½¬çš„è§’åº¦ */
-		
+		/* ²½Öè2£º¼ÆËãÃ¿¸öÖáĞı×ªµÄ½Ç¶È */
+
 		Tour[i] = fabs(mJointAngleBegin[i] - mJointAngleEnd[i]);
 
 		if (mJointAngleBegin[i] > mJointAngleEnd[i])
@@ -238,19 +207,19 @@ void CHLMotionPlan::GetPlanPoints()
 			Acc[i] = mAcc;
 		}
 
-		/* æ­¥éª¤3ï¼šè®¡ç®—æ¯ä¸ªè½´ç§»åŠ¨åˆ°ç»ˆæ­¢ç‚¹æ‰€éœ€è¦æ—¶é—´ */
-		//è½¬è§’å¤ªå°åˆ™é€€åŒ–ä¸ºä¸‰è§’å½¢
-		if (Tour[i] <= mVel * mVel/mAcc)
+		/* ²½Öè3£º¼ÆËãÃ¿¸öÖáÒÆ¶¯µ½ÖÕÖ¹µãËùĞèÒªÊ±¼ä */
+		//×ª½ÇÌ«Ğ¡ÔòÍË»¯ÎªÈı½ÇĞÎ
+		if (Tour[i] <= mVel * mVel / mAcc)
 		{
 			Time[i] = 2 * sqrt(Tour[i] / mAcc);
 		}
-		//è½¬è§’è¶³å¤Ÿåˆ™æ¢¯å½¢è§„åˆ’
+		//×ª½Ç×ã¹»ÔòÌİĞÎ¹æ»®
 		else
 		{
-			Time[i] = 2 * mVel / mAcc + (Tour[i] / mVel - mVel / mAcc);
+			Time[i] = mVel / mAcc + Tour[i] / mVel;
 		}
 
-		/* æ­¥éª¤4ï¼šæ ¹æ®é‡‡æ ·æ—¶é—´è®¡ç®—ç¦»æ•£ç‚¹ä½æ•° */
+		/* ²½Öè4£º¸ù¾İ²ÉÑùÊ±¼ä¼ÆËãÀëÉ¢µãÎ»Êı */
 		PointNum[i] = Time[i] / mSampleTime;
 	}
 
@@ -270,7 +239,7 @@ void CHLMotionPlan::GetPlanPoints()
 	}
 
 
-	/* æ‰¾å…­ä¸ªå…³èŠ‚çš„ç‚¹æ•°æœ€å¤§è€… */
+	/* ÕÒÁù¸ö¹Ø½ÚµÄµãÊı×î´óÕß */
 	int MaxNum = 0;
 	for (int i = 0; i < 6; i++)
 	{
@@ -279,16 +248,16 @@ void CHLMotionPlan::GetPlanPoints()
 	}
 
 
-	/************************ è®¡ç®—å„å…³èŠ‚è§’ ***********************/
-	
-	double TempPos[6] = { 0 };  //æ¯ä¸ªè½´å½“å‰å…³èŠ‚è§’
+	/************************ ¼ÆËã¸÷¹Ø½Ú½Ç ***********************/
+
+	double TempPos[6] = { 0 };  //Ã¿¸öÖáµ±Ç°¹Ø½Ú½Ç
 	for (int i = 0; i < MaxNum; i++)
-	{//æ—¶é—´
-		//è½´
+	{//Ê±¼ä
+		//Öá
 		for (int j = 0; j < 6; j++)
 		{
 
-			//è‹¥è½¬è§’å¤ªå°ï¼Œåˆ™æŒ‰ä¸‰è§’å½¢è§„åˆ’
+			//Èô×ª½ÇÌ«Ğ¡£¬Ôò°´Èı½ÇĞÎ¹æ»®
 			if (Tour[j] <= mVel * mVel / mAcc)
 			{
 				if (i < 1000 * sqrt(Tour[j] / mAcc))
@@ -296,7 +265,7 @@ void CHLMotionPlan::GetPlanPoints()
 					//0.5at^2
 					TempPos[j] = mJointAngleBegin[j] + 0.5 * Acc[j] * i * i * 0.001 * 0.001;
 				}
-				else if(i >= 1000 * sqrt(Tour[j] / mAcc) && i < PointNum[j])
+				else if (i >= 1000 * sqrt(Tour[j] / mAcc) && i < PointNum[j])
 				{
 					TempPos[j] = mJointAngleEnd[j] - 0.5 * Acc[j] * (PointNum[j] - i) * (PointNum[j] - i) * 0.001 * 0.001;
 				}
@@ -305,7 +274,7 @@ void CHLMotionPlan::GetPlanPoints()
 					TempPos[j] = TempPos[j];
 				}
 			}
-			//è½¬è§’è¶³å¤Ÿï¼Œåˆ™ç”¨æ¢¯å½¢è§„åˆ’
+			//×ª½Ç×ã¹»£¬ÔòÓÃÌİĞÎ¹æ»®
 			else
 			{
 				if (i < 1000 * mVel / mAcc)
@@ -327,428 +296,58 @@ void CHLMotionPlan::GetPlanPoints()
 			}
 		}
 
-		//è¾“å‡ºåˆ°æ–‡ä»¶
+		//Êä³öµ½ÎÄ¼ş
 		outfile << TempPos[0] << "  "
-				<< TempPos[1] << "  "
-				<< TempPos[2] << "  "
-				<< TempPos[3] << "  "
-				<< TempPos[4] << "  "
-				<< TempPos[5] << "  ";
+			<< TempPos[1] << "  "
+			<< TempPos[2] << "  "
+			<< TempPos[3] << "  "
+			<< TempPos[4] << "  "
+			<< TempPos[5] << "  ";
 		outfile << endl;
 	}
 	outfile.close();
 }
 
+/********************************************************************
+ABSTRACT:	¹æ»®µÑ¿¨¶û¿Õ¼äÁ½µã¼äµÄÖ±ÏßÔË¶¯
 
-void CHLMotionPlan::Cartesian(PosStruct startPos, PosStruct endPos)
+INPUTS:		startPos			ÆğÊ¼µãÎ»µÑ¿¨¶û×ø±ê
+			endPos				½áÊøµãÎ»µÑ¿¨¶û×ø±ê
+
+OUTPUTS:	µã¼£ÎÄ¼ş "data.txt"
+
+RETURN:		<none>
+***********************************************************************/
+void CHLMotionPlan::CartesianLinePlan(PosStruct startPos, PosStruct endPos)
 {
-	ofstream outfile;               			//åˆ›å»ºæ–‡ä»¶
-	outfile.open("data2.txt");
-	outfile << mJointAngleBegin[0] << "  "
-			<< mJointAngleBegin[1] << "  "
-			<< mJointAngleBegin[2] << "  "
-			<< mJointAngleBegin[3] << "  "
-			<< mJointAngleBegin[4] << "  "
-			<< mJointAngleBegin[5] << "  ";
-	outfile << endl;                           //ä¿å­˜åˆå§‹çš„æ—¶é—´ã€å…­ä¸ªå…³èŠ‚è§’åº¦
+	ofstream outfile;               			//´´½¨ÎÄ¼ş
+	outfile.open("data.txt");
 
-	double Tour[6] = { 0 };    //æ¯ä¸ªç¬›å¡å°”ç©ºé—´ç»´åº¦çš„å¢é‡
-	double Acc[6] = { 0 };     //æ¯ä¸ªç¬›å¡å°”ç©ºé—´ç»´åº¦çš„åŠ é€Ÿåº¦
-	//double Vel[6] = { 0 };     //å„ç»´çš„é€Ÿåº¦
-	double Time[6] = { 0 };    //å„ç»´çš„æ—¶é—´
-	int PointNum[6] = { 0 };   //å„ç»´çš„ç‚¹æ•°
+	double Tour[3] = { 0 };     //x,y,zµÄÔöÁ¿ÏòÁ¿£¬µ¥Î»m
+	double direction[3] = { 0 };//·½Ïòµ¥Î»ÏòÁ¿
 
-	/* è®¡ç®—æ¯ä¸ªç»´åº¦çš„å¢é‡ */
-
-	Tour[0] = fabs(startPos.x - endPos.x);
-	Tour[1] = fabs(startPos.y - endPos.y);
-	Tour[2] = fabs(startPos.z - endPos.z);
-	Tour[3] = fabs(startPos.yaw - endPos.yaw);
-	Tour[4] = fabs(startPos.pitch - endPos.pitch);
-	Tour[5] = fabs(startPos.roll - endPos.roll);
-
-	/* ç¬›å¡å°”ç©ºé—´å„ç»´åŠ é€Ÿåº¦èµ‹å€¼ */
-	{
-		if (startPos.x > endPos.x)
-		{
-			Acc[0] = -LAcc;
-		}
-		else
-		{
-			Acc[0] = LAcc;
-		}
-
-		if (startPos.y > endPos.y)
-		{
-			Acc[1] = -LAcc;
-		}
-		else
-		{
-			Acc[1] = LAcc;
-		}
-
-		if (startPos.z > endPos.z)
-		{
-			Acc[2] = -LAcc;
-		}
-		else
-		{
-			Acc[2] = LAcc;
-		}
-
-		if (startPos.yaw > endPos.yaw)
-		{
-			Acc[3] = -mAcc;
-		}
-		else
-		{
-			Acc[3] = mAcc;
-		}
-		if (startPos.pitch > endPos.pitch)
-		{
-			Acc[4] = -mAcc;
-		}
-		else
-		{
-			Acc[4] = mAcc;
-		}
-		if (startPos.roll > endPos.roll)
-		{
-			Acc[5] = -mAcc;
-		}
-		/*else
-		{
-			Acc[5] = mAcc;
-		}*/
-	}
-
-	/* å„ç»´é€Ÿåº¦èµ‹å€¼ */
-	//for (int i = 0; i < 3; i++)
-	//{
-	//	Vel[i] = LVel;
-	//	Vel[i + 3] = mVel;
-	//}
-
-	/* è®¡ç®—å„ç»´çš„æ—¶é—´ */
-	{
-		//x,y,z
-		for (int i = 0; i < 3; i++)
-		{
-			if (Tour[i]/1000 < LVel * LVel / LAcc)
-			{
-				Time[i] = 2 * sqrt(Tour[i]*0.001 / LAcc);
-			}
-			else
-			{
-				Time[i] = 2 * LVel / LAcc + (Tour[i]*0.001/LVel - LVel * LVel / LAcc);
-			}
-		}
-		
-		//yaw,pitch,roll
-		for (int i = 3; i < 6; i++)
-		{
-			if (Tour[i] < mVel * mVel / mAcc)
-			{
-				Time[i] = 2 * sqrt(Tour[i] / mAcc);
-			}
-			else
-			{
-				Time[i] = 2 * mVel / mAcc + (Tour[i] - mVel * mVel / mAcc) / mVel;
-			}
-		}
-	}
-
-	
-	/* è®¡ç®—å„ç»´çš„ç‚¹æ•° */
-	for (int i = 0; i < 6; i++)
-	{
-		PointNum[i] = Time[i] / mSampleTime;
-	}
-
-
-	
-	/* æ‰¾å…­ä¸ªç»´åº¦çš„ç‚¹æ•°æœ€å¤§è€… */
-	int MaxNum = 0;
-	for (int i = 0; i < 6; i++)
-	{
-		if (PointNum[i] > MaxNum)
-			MaxNum = PointNum[i];
-	}
-
-	//cout << endl << Acc[5];
-
-	/* å„ç»´çš„è§„åˆ’ */
-	double TempPos[6] = { 0 };
-	double Decar[6]  = { 0 };  
-
-	for (int i = 0; i < MaxNum; i++)
-	{//æ—¶é—´
-		cout << i << endl;
-		//x			
-		if (Tour[0]/1000 <= LVel * LVel / LAcc)
-		{
-			if (i < 1000 * sqrt(Tour[0]*0.001 / LAcc))
-			{
-				//0.5at^2
-				Decar[0] = startPos.x/1000 + 0.5 * Acc[0] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * sqrt(Tour[0]*0.001 / LAcc) && i < PointNum[0])
-			{
-				Decar[0] = endPos.x/1000 - 0.5 * Acc[0] * (PointNum[0] - i) * (PointNum[0] - i) * 0.001 * 0.001;
-			}
-			else
-			{
-				Decar[0] = Decar[0];
-			}
-		}
-		else
-		{
-			if (i < 1000 * LVel / LAcc)
-			{
-				Decar[0] = startPos.x/1000 + 0.5 * Acc[0] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * LVel / LAcc && i < PointNum[0] - 1000 * LVel / LAcc)
-			{
-				Decar[0] = startPos.x/1000 + Acc[0] * (LVel / LAcc) * (i * 0.001 - 0.5 * LVel / LAcc);
-			}
-			else if (i >= PointNum[0] - 1000 * LVel / LAcc && i < PointNum[0])
-			{
-				Decar[0] = endPos.x/1000 - 0.5 * Acc[0] * (PointNum[0] - i) * (PointNum[0] - i) * 0.001 * 0.001;
-			}
-		}
-		//y			
-		if (Tour[1]/1000 <= LVel * LVel / LAcc)
-		{
-			if (i < 1000 * sqrt(Tour[1]*0.001 / LAcc))
-			{
-				//0.5at^2
-				Decar[1] = startPos.y/1000 + 0.5 * Acc[1] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * sqrt(Tour[1]*0.001 / LAcc) && i < PointNum[1])
-			{
-				Decar[1] = endPos.y/1000 - 0.5 * Acc[1] * (PointNum[1] - i) * (PointNum[1] - i) * 0.001 * 0.001;
-			}
-		}
-		else
-		{
-			if (i < 1000 * LVel / LAcc)
-			{
-				Decar[1] = startPos.y/1000 + 0.5 * Acc[1] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * LVel / LAcc && i < PointNum[1] - 1000 * LVel / LAcc)
-			{
-				Decar[1] = startPos.y/1000 + Acc[1] * (LVel / LAcc) * (i * 0.001 - 0.5 * LVel / LAcc);
-			}
-			else if (i >= PointNum[1] - 1000 * LVel / LAcc && i < PointNum[1])
-			{
-				Decar[1] = endPos.y/1000 - 0.5 * Acc[1] * (PointNum[1] - i) * (PointNum[1] - i) * 0.001 * 0.001;
-			}
-		}
-		//z
-		if (Tour[2]/1000 <= LVel * LVel / LAcc)
-		{
-			if (i < 1000 * sqrt(Tour[2]*0.001 / LAcc))
-			{
-				//0.5at^2
-				Decar[2] = startPos.z/1000 + 0.5 * Acc[2] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * sqrt(Tour[2]*0.001 / LAcc) && i < PointNum[2])
-			{
-				Decar[2] = endPos.z/1000 - 0.5 * Acc[2] * (PointNum[2] - i) * (PointNum[2] - i) * 0.001 * 0.001;
-			}
-		}
-		else
-		{
-			if (i < 1000 * LVel / LAcc)
-			{
-				Decar[2] = startPos.z/1000 + 0.5 * Acc[2] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * LVel / LAcc && i < PointNum[2] - 1000 * LVel / LAcc)
-			{
-				Decar[2] = startPos.z/1000 + Acc[2] * (LVel / LAcc) * (i * 0.001 - 0.5 * LVel / LAcc);
-			}
-			else if (i >= PointNum[2] - 1000 * LVel / LAcc && i < PointNum[2])
-			{
-				Decar[2] = endPos.z/1000 - 0.5 * Acc[2] * (PointNum[2] - i) * (PointNum[2] - i) * 0.001 * 0.001;
-			}
-		}
-		//yaw
-		if (Tour[3] <= mVel * mVel / mAcc)
-		{
-			if (i < 1000 * sqrt(Tour[3] / mAcc))
-			{
-				//0.5at^2
-				Decar[3] = startPos.yaw + 0.5 * Acc[3] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * sqrt(Tour[3] / mAcc) && i < PointNum[3])
-			{
-				Decar[3] = endPos.yaw - 0.5 * Acc[3] * (PointNum[3] - i) * (PointNum[3] - i) * 0.001 * 0.001;
-			}
-		}
-		else
-		{
-			if (i < 1000 * mVel / mAcc)
-			{
-				Decar[3] = startPos.yaw + 0.5 * Acc[3] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * mVel / mAcc && i < PointNum[3] - 1000 * mVel / mAcc)
-			{
-				Decar[3] = startPos.yaw + Acc[3] * (mVel / mAcc) * (i * 0.001 - 0.5 * mVel / mAcc);
-			}
-			else if (i >= PointNum[3] - 1000 * mVel / mAcc && i < PointNum[3])
-			{
-				Decar[3] = endPos.yaw - 0.5 * Acc[3] * (PointNum[3] - i) * (PointNum[3] - i) * 0.001 * 0.001;
-			}
-		}
-		//pitch
-		if (Tour[4] <= mVel * mVel / mAcc)
-		{
-			if (i < 1000 * sqrt(Tour[4] / mAcc))
-			{
-				//0.5at^2
-				Decar[4] = startPos.pitch + 0.5 * Acc[4] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * sqrt(Tour[4] / mAcc) && i < PointNum[4])
-			{
-				Decar[4] = endPos.pitch - 0.5 * Acc[4] * (PointNum[4] - i) * (PointNum[4] - i) * 0.001 * 0.001;
-			}
-		}
-		else
-		{
-			if (i < 1000 * mVel / mAcc)
-			{
-				Decar[4] = startPos.pitch + 0.5 * Acc[4] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * mVel / mAcc && i < PointNum[4] - 1000 * mVel / mAcc)
-			{
-				Decar[4] = startPos.pitch + Acc[4] * (mVel / mAcc) * (i * 0.001 - 0.5 * mVel / mAcc);
-			}
-			else if (i >= PointNum[4] - 1000 * mVel / mAcc && i < PointNum[4])
-			{
-				Decar[4] = endPos.pitch - 0.5 * Acc[4] * (PointNum[4] - i) * (PointNum[4] - i) * 0.001 * 0.001;
-			}
-		}
-		//roll
-		if (Tour[5] <= mVel * mVel / mAcc)
-		{
-			if (i < 1000 * sqrt(Tour[5] / mAcc))
-			{
-				//0.5at^2
-				Decar[5] = startPos.roll + 0.5 * Acc[5] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * sqrt(Tour[5] / mAcc) && i < PointNum[5])
-			{
-				Decar[5] = endPos.roll - 0.5 * Acc[5] * (PointNum[5] - i) * (PointNum[5] - i) * 0.001 * 0.001;
-			}
-		}
-		else
-		{
-			if (i < 1000 * mVel / mAcc)
-			{
-				cout << "  1 " << endl;
-				Decar[5] = startPos.roll + 0.5 * Acc[5] * i * i * 0.001 * 0.001;
-			}
-			else if (i >= 1000 * mVel / mAcc && i < PointNum[5] - 1000 * mVel / mAcc)
-			{
-				cout << "  2 " << endl;
-				Decar[5] = startPos.roll + Acc[5] * (mVel / mAcc) * (i * 0.001 - 0.5 * mVel / mAcc);
-			}
-			else if (i >= PointNum[5] - 1000 * mVel / mAcc && i < PointNum[5])
-			{
-				cout << "  3 " << endl;
-				Decar[5] = endPos.roll - 0.5 * Acc[5] * (PointNum[5] - i) * (PointNum[5] - i) * 0.001 * 0.001;
-			}
-			else
-			{
-				Decar[5] = Decar[5];
-			}
-		}
-
-		double startAngle[3], endAngle[3];
-
-		startAngle[0] = Decar[3] * PI / 180;
-		startAngle[1] = Decar[4] * PI / 180;
-		startAngle[2] = Decar[5] * PI / 180;
-
-
-		mStartMatrixData[0] = cos(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) - sin(startAngle[0]) * sin(startAngle[2]);
-		mStartMatrixData[1] = -cos(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) - sin(startAngle[0]) * cos(startAngle[2]);
-		mStartMatrixData[2] = cos(startAngle[0]) * sin(startAngle[1]);
-		mStartMatrixData[3] = Decar[0];
-
-		mStartMatrixData[4] = sin(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) + cos(startAngle[0]) * sin(startAngle[2]);
-		mStartMatrixData[5] = -sin(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) + cos(startAngle[0]) * cos(startAngle[2]);
-		mStartMatrixData[6] = sin(startAngle[0]) * sin(startAngle[1]);
-		mStartMatrixData[7] = Decar[1];
-
-		mStartMatrixData[8] = -sin(startAngle[1]) * cos(startAngle[2]);
-		mStartMatrixData[9] = sin(startAngle[1]) * sin(startAngle[2]);
-		mStartMatrixData[10] = cos(startAngle[1]);
-		mStartMatrixData[11] = Decar[2];
-
-		mStartMatrixData[12] = 0;
-		mStartMatrixData[13] = 0;
-		mStartMatrixData[14] = 0;
-		mStartMatrixData[15] = 1;
-
-		double angle[6] = { 0 };
-		//HLRobot::SetRobotPos(startPos.x, startPos.y, startPos.z, startPos.yaw, startPos.pitch, startPos.roll, startPos.config);
-		HLRobot::GetJointAngles(mStartMatrixData, angle);
-
-		//è¾“å‡ºåˆ°æ–‡ä»¶
-		outfile << angle[0] << "  "
-				<< angle[1] << "  "
-				<< angle[2] << "  "
-				<< angle[3] << "  "
-				<< angle[4] << "  "
-				<< angle[5] << "  ";
-		outfile << endl;
-	}
-
-
-
-
-
-	
-}
-
-void CHLMotionPlan::CartesianLine(PosStruct startPos, PosStruct endPos)
-{
-	ofstream outfile;               			//åˆ›å»ºæ–‡ä»¶
-	outfile.open("data2.txt");
-	outfile << mJointAngleBegin[0] << "  "
-			<< mJointAngleBegin[1] << "  "
-			<< mJointAngleBegin[2] << "  "
-			<< mJointAngleBegin[3] << "  "
-			<< mJointAngleBegin[4] << "  "
-			<< mJointAngleBegin[5] << "  ";
-	outfile << endl;
-
-	double Tour[3] = { 0 };     //x,y,zçš„å¢é‡å‘é‡ï¼Œå•ä½m
-	double direction[3] = { 0 };//æ–¹å‘å•ä½å‘é‡
-	
-	int PointNum = 0;          //ç‚¹æ•°
+	int PointNum = 0;          //µãÊı
 
 	Tour[0] = (endPos.x - startPos.x) / 1000;
 	Tour[1] = (endPos.y - startPos.y) / 1000;
 	Tour[2] = (endPos.z - startPos.z) / 1000;
 
-	double distance = sqrt(Tour[0] * Tour[0] + Tour[1] * Tour[1] + Tour[2] * Tour[2]);   //è¿åŠ¨è·ç¦»
-	double Time = 0;           //æ—¶é—´
-	double delta = 0;          //æ¯ä¸€å°æ®µçš„å¢é‡
+	double distance = sqrt(Tour[0] * Tour[0] + Tour[1] * Tour[1] + Tour[2] * Tour[2]);   //ÔË¶¯¾àÀë
+	double Time = 0;           //Ê±¼ä
+	double delta = 0;          //Ã¿Ò»Ğ¡¶ÎµÄÔöÁ¿
 
 	direction[0] = Tour[0] / distance;
 	direction[1] = Tour[1] / distance;
 	direction[2] = Tour[2] / distance;
 
-	/* è®¡ç®—æ—¶é—´ */
+	/* ¼ÆËãÊ±¼ä */
 	if (distance < LVel * LVel / LAcc)
 	{
 		Time = 2 * sqrt(LVel / LAcc);
 	}
 	else
 	{
-		Time = 2 * LVel / LAcc + (distance / LVel -  LVel / LAcc);
+		Time = LVel / LAcc + distance / LVel;
 	}
 
 	PointNum = Time / mSampleTime;
@@ -757,7 +356,7 @@ void CHLMotionPlan::CartesianLine(PosStruct startPos, PosStruct endPos)
 
 	for (int i = 0; i < PointNum; i++)
 	{
-		cout << i << endl;
+		//cout << i << endl;
 		if (distance <= LVel * LVel / LAcc)
 		{
 			if (i < 1000 * sqrt(distance / LAcc))
@@ -770,7 +369,7 @@ void CHLMotionPlan::CartesianLine(PosStruct startPos, PosStruct endPos)
 			}
 			else if (i >= 1000 * sqrt(distance / LAcc) && i < PointNum)
 			{
-				delta = distance - 0.5 * LAcc * i * i * 0.001 * 0.001;
+				delta = distance - 0.5 * LAcc * (PointNum - i) * (PointNum - i) * 0.001 * 0.001;
 				mStartMatrixData[3] = startPos.x / 1000 + delta * direction[0];
 				mStartMatrixData[7] = startPos.y / 1000 + delta * direction[1];
 				mStartMatrixData[11] = startPos.z / 1000 + delta * direction[2];
@@ -800,14 +399,12 @@ void CHLMotionPlan::CartesianLine(PosStruct startPos, PosStruct endPos)
 				mStartMatrixData[11] = startPos.z / 1000 + delta * direction[2];
 			}
 		}
-		
 
 		double startAngle[3], endAngle[3];
 
 		startAngle[0] = startPos.yaw * PI / 180;
 		startAngle[1] = startPos.pitch * PI / 180;
 		startAngle[2] = startPos.roll * PI / 180;
-
 
 		mStartMatrixData[0] = cos(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) - sin(startAngle[0]) * sin(startAngle[2]);
 		mStartMatrixData[1] = -cos(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) - sin(startAngle[0]) * cos(startAngle[2]);
@@ -827,17 +424,139 @@ void CHLMotionPlan::CartesianLine(PosStruct startPos, PosStruct endPos)
 		mStartMatrixData[15] = 1;
 
 		double angle[6] = { 0 };
-		//HLRobot::SetRobotPos(startPos.x, startPos.y, startPos.z, startPos.yaw, startPos.pitch, startPos.roll, startPos.config);
 		HLRobot::GetJointAngles(mStartMatrixData, angle);
 
 		outfile << angle[0] << "  "
-				<< angle[1] << "  "
-				<< angle[2] << "  "
-				<< angle[3] << "  "
-				<< angle[4] << "  "
-				<< angle[5] << "  ";
+			<< angle[1] << "  "
+			<< angle[2] << "  "
+			<< angle[3] << "  "
+			<< angle[4] << "  "
+			<< angle[5] << "  ";
 		outfile << endl;
 	}
 	outfile.close();
+}
 
+/********************************************************************
+ABSTRACT:	¹æ»®µÑ¿¨¶û¿Õ¼äÖĞÁ½µÈ¸ßµã¼äµÄ°ëÔ²ÔË¶¯
+
+INPUTS:		startPos			ÆğÊ¼µãÎ»µÑ¿¨¶û×ø±ê
+			endPos				½áÊøµãÎ»µÑ¿¨¶û×ø±ê
+
+OUTPUTS:	µã¼£ÎÄ¼ş "data.txt"
+
+RETURN:		<none>
+***********************************************************************/
+void CHLMotionPlan::CirclePlan(PosStruct startPos, PosStruct endPos)
+{
+	ofstream outfile;           //´´½¨ÎÄ¼ş
+	outfile.open("data.txt");	//´ò¿ªÎÄ¼ş
+
+	double startAngle[3], endAngle[3];
+	double Theta, Diameter, Tour, Time, delta = 0;				//ThetaÊÇmÖáÓëxÖá¼Ğ½Ç£»DiameterÊÇÊ¼Ä©µã¾àÀë£¬Ò²ÊÇÔ²Ö±¾¶£¬µ¥Î»ÊÇm£»
+																//TourÊÇÂ·³Ì£¬Ò²ÊÇ°ëÔ²³¤£¬µ¥Î»m£»TimeÊÇÊ±¼ä£»deltaÊÇÏà¶ÔÓÚÆğÊ¼µãÂ·³ÌÔöÁ¿
+	int PointNum;			//µãÊı
+
+	Theta = atan2(endPos.y - startPos.y, endPos.x - startPos.x);
+	Diameter = sqrt(pow(endPos.x - startPos.x, 2) + pow(endPos.y - startPos.y, 2)) / 1000;
+	Tour = 0.5 * PI * Diameter;
+
+	/* ¼ÆËãÊ±¼ä */
+	if (Tour < LVel * LVel / LAcc)
+	{
+		Time = 2 * sqrt(Tour / LAcc);
+	}
+	else
+	{
+		Time = LVel / LAcc + Tour / LVel;
+	}
+
+	/* ¼ÆËãµãÊı */
+	PointNum = Time / mSampleTime;
+
+	cout << Theta << "      " << Diameter << "       " << Tour << "        " << Time << "       " << PointNum << endl;
+
+	startAngle[0] = startPos.yaw * PI / 180;
+	startAngle[1] = startPos.pitch * PI / 180;
+
+	for (int i = 0; i < PointNum; i++)
+	{
+		//cout << i << endl;
+		if (Tour <= LVel * LVel / LAcc)
+		{
+			if (i < 1000 * sqrt(Tour / LAcc))
+			{
+				delta = 0.5 * LAcc * i * i * 0.001 * 0.001;
+				mStartMatrixData[3] = startPos.x / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * cos(Theta);
+				mStartMatrixData[7] = startPos.y / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * sin(Theta);
+				mStartMatrixData[11] = startPos.z / 1000 + 0.5 * Diameter * sin(2 * delta / Diameter);
+				startAngle[2] = startPos.roll * PI / 180 - 2 * delta / Diameter;
+			}
+			else if (i >= 1000 * sqrt(Tour / LAcc) && i < PointNum)
+			{
+				delta = Tour - 0.5 * LAcc * (PointNum - i) * (PointNum - i) * 0.001 * 0.001;
+				mStartMatrixData[3] = startPos.x / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * cos(Theta);
+				mStartMatrixData[7] = startPos.y / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * sin(Theta);
+				mStartMatrixData[11] = startPos.z / 1000 + 0.5 * Diameter * sin(2 * delta / Diameter);
+				startAngle[2] = startPos.roll * PI / 180 - 2 * delta / Diameter;
+			}
+		}
+		else
+		{
+			if (i < 1000 * LVel / LAcc)
+			{
+				delta = 0.5 * LAcc * i * i * 0.001 * 0.001;
+				mStartMatrixData[3] = startPos.x / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * cos(Theta);
+				mStartMatrixData[7] = startPos.y / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * sin(Theta);
+				mStartMatrixData[11] = startPos.z / 1000 + 0.5 * Diameter * sin(2 * delta / Diameter);
+				startAngle[2] = startPos.roll * PI / 180 - 2 * delta / Diameter;
+			}
+			else if (i >= 1000 * LVel / LAcc && i < PointNum - 1000 * LVel / LAcc)
+			{
+				delta = LAcc * (LVel / LAcc) * (i * 0.001 - 0.5 * LVel / LAcc);
+				mStartMatrixData[3] = startPos.x / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * cos(Theta);
+				mStartMatrixData[7] = startPos.y / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * sin(Theta);
+				mStartMatrixData[11] = startPos.z / 1000 + 0.5 * Diameter * sin(2 * delta / Diameter);
+				startAngle[2] = startPos.roll * PI / 180 - 2 * delta / Diameter;
+			}
+			else if (i >= PointNum - 1000 * LVel / LAcc && i < PointNum)
+			{
+				delta = Tour - 0.5 * LAcc * (PointNum - i) * (PointNum - i) * 0.001 * 0.001;
+				mStartMatrixData[3] = startPos.x / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * cos(Theta);
+				mStartMatrixData[7] = startPos.y / 1000 + 0.5 * Diameter * (1 - cos(2 * delta / Diameter)) * sin(Theta);
+				mStartMatrixData[11] = startPos.z / 1000 + 0.5 * Diameter * sin(2 * delta / Diameter);
+				startAngle[2] = startPos.roll * PI / 180 - 2 * delta / Diameter;
+			}
+		}
+
+		mStartMatrixData[0] = cos(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) - sin(startAngle[0]) * sin(startAngle[2]);
+		mStartMatrixData[1] = -cos(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) - sin(startAngle[0]) * cos(startAngle[2]);
+		mStartMatrixData[2] = cos(startAngle[0]) * sin(startAngle[1]);
+
+		mStartMatrixData[4] = sin(startAngle[0]) * cos(startAngle[1]) * cos(startAngle[2]) + cos(startAngle[0]) * sin(startAngle[2]);
+		mStartMatrixData[5] = -sin(startAngle[0]) * cos(startAngle[1]) * sin(startAngle[2]) + cos(startAngle[0]) * cos(startAngle[2]);
+		mStartMatrixData[6] = sin(startAngle[0]) * sin(startAngle[1]);
+
+		mStartMatrixData[8] = -sin(startAngle[1]) * cos(startAngle[2]);
+		mStartMatrixData[9] = sin(startAngle[1]) * sin(startAngle[2]);
+		mStartMatrixData[10] = cos(startAngle[1]);
+
+		mStartMatrixData[12] = 0;
+		mStartMatrixData[13] = 0;
+		mStartMatrixData[14] = 0;
+		mStartMatrixData[15] = 1;
+
+		double angle[6] = { 0 };
+		HLRobot::GetJointAngles(mStartMatrixData, angle);
+
+		outfile << angle[0] << "  "
+			<< angle[1] << "  "
+			<< angle[2] << "  "
+			<< angle[3] << "  "
+			<< angle[4] << "  "
+			<< angle[5] << "  ";
+		outfile << endl;
+	}
+
+	outfile.close();
 }

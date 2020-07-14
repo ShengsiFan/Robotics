@@ -1,4 +1,4 @@
-ï»¿#include "HLrobotconfig.h"
+#include "HLrobotconfig.h"
 #include <cmath>
 #include <iostream> 
 #include "Eigen/Dense"
@@ -11,93 +11,57 @@ using namespace Eigen;
 #define L3 0.45
 #define L4 0.084
 
-//int main()
-//{
-//	double Tran[16]{ 0 };
-//	bool config[3] = { 1,1,1 };
-//	bool Turns[6] = { 1,1,1,1,1,1 };
-//	double T[16] = {-0.013728,-0.356516,0.934188,0.395649,-0.128635,0.92143,0.351937,0.121405,-0.991597,-0.115338,-0.0585882,1.01431,0,0,0,1};
-//	double q[6] = { 16.149*PI / 180,-14.188 * PI / 180,92.396 * PI / 180,16.699 * PI / 180,15.796 * PI / 180,157 * PI / 180 };
-//	//double q[6] = { 0,0,0,0,PI/4,0 };
-//	double Tool[16]{ 0 };
-//	HLRobot::robotForwardHJQ(q, Tool, Tran, config, Turns);
-//	double theta[6] = {0};
-//
-//	for (int i = 0; i < 16; i++)
-//	{
-//		cout << Tran[i] << '\t';
-//		if (i % 4 == 3)
-//		{
-//			cout << endl;
-//		}
-//	}
-//	cout << endl;
-//
-//	HLRobot::robotBackwardHJQ(T, config, Tool, Turns, theta);
-//	for (int i = 0; i < 6; i++)
-//	{
-//		cout << theta[i]*180/PI << endl;
-//	}
-//
-//	while (1)
-//	{
-//		;
-//	}
-//	return 0;
-//}
-
 namespace HLRobot
 {
-	Vector4d q0_4(4, 1), q1_4(4, 1), q2_4(4, 1), q3_4(4, 1), q4_4(4, 1); // é€†è¿åŠ¨å­¦åˆå§‹ç‚¹é€‰æ‹©
+	Vector4d q0_4(4, 1), q1_4(4, 1), q2_4(4, 1), q3_4(4, 1), q4_4(4, 1); // ÄæÔË¶¯Ñ§³õÊ¼µãÑ¡Ôñ
 
-	Vector3d v1, v2, v3, v4, v5, v6;                                     //é€Ÿåº¦
-	
-	Vector3d right1, right2, right3, right4, right5, right6;             //å¹³ç§»é‡
+	Vector3d v1, v2, v3, v4, v5, v6;                                     //ËÙ¶È
 
-	Matrix3d I = MatrixXd::Identity(3, 3);   //3x3å•ä½é˜µ
-	
-	Matrix4d g_st0(4, 4);                    //åˆå§‹ä½å‹
+	Vector3d right1, right2, right3, right4, right5, right6;             //Æ½ÒÆÁ¿
 
-	/* å­é—®é¢˜ */
+	Matrix3d I = MatrixXd::Identity(3, 3);   //3x3µ¥Î»Õó
+
+	Matrix4d g_st0(4, 4);                    //³õÊ¼Î»ĞÍ
+
+	/* ×ÓÎÊÌâ */
 	bool Subproblem1(double* theta, const int index, const VectorXd& xi, const Vector4d& p_4, const Vector4d& q_4, const Vector4d& r_4);
 	bool Subproblem2(double* theta, const int index1, const int index2, const VectorXd& xi1, const VectorXd& xi2, const Vector4d& p_4, const Vector4d& q_4, const Vector4d& r_4);
 	bool Subproblem3(double* theta, const int index, const VectorXd& xi, const Vector4d& p_4, const Vector4d& q_4, const Vector4d& r_4, const double delta);
-	
+
 	/********************************************************************
-	ABSTRACT:	æœºå™¨äººé€†
+	ABSTRACT:	»úÆ÷ÈËÄæ½â
 
-	INPUTS:		T[16]:	ä½å§¿çŸ©é˜µï¼Œå…¶ä¸­é•¿åº¦è·ç¦»ä¸ºç±³
-				config[3]ï¼šå§¿æ€ï¼Œå…­è½´æœºå™¨äººå¯¹åº”æœ‰8ç§å§¿æ€ï¼Œä¸ºäº†å®‰å…¨ï¼Œ
-				å®éªŒå®¤ä¸­æˆ‘ä»¬åªè®¡ç®—ä¸€ç§å³å¯ï¼Œconfigåœ¨æ­£è¿åŠ¨å­¦ä¸­è¿›è¡Œäº†åˆå§‹åŒ–ï¼Œæ‰€ä»¥ä¸éœ€è¦è¿›è¡Œæ›´æ”¹ã€‚
+	INPUTS:		T[16]:	Î»×Ë¾ØÕó£¬ÆäÖĞ³¤¶È¾àÀëÎªÃ×
+				config[3]£º×ËÌ¬£¬ÁùÖá»úÆ÷ÈË¶ÔÓ¦ÓĞ8ÖÖ×ËÌ¬£¬ÎªÁË°²È«£¬
+				ÊµÑéÊÒÖĞÎÒÃÇÖ»¼ÆËãÒ»ÖÖ¼´¿É£¬configÔÚÕıÔË¶¯Ñ§ÖĞ½øĞĞÁË³õÊ¼»¯£¬ËùÒÔ²»ĞèÒª½øĞĞ¸ü¸Ä¡£
+				Tool:¿ÉÒÔºöÂÔ
+				Turns[6]£ºÃ¿¸ö¹Ø½Ú¶ÔÓ¦µÄÈ¦Êı
 
-				Tool:å¯ä»¥å¿½ç•¥
-				Turns[6]ï¼šæ¯ä¸ªå…³èŠ‚å¯¹åº”çš„åœˆæ•°
-
-	OUTPUTS:    theta[6] 6ä¸ªå…³èŠ‚è§’, å•ä½ä¸ºå¼§åº¦
+	OUTPUTS:    theta[6] 6¸ö¹Ø½Ú½Ç, µ¥Î»Îª»¡¶È
 
 	RETURN:		<none>
 	***********************************************************************/
 	void robotBackwardHJQ(const double* T, bool* config, double* Tool, bool* Turns, double* theta)
 	{
-		VectorXd xi1(6, 1), xi2(6, 1), xi3(6, 1), xi4(6, 1), xi5(6, 1), xi6(6, 1);                  //è¿åŠ¨èºæ—‹
-		Vector3d omega1(3, 1), omega2(3, 1), omega3(3, 1), omega4(3, 1), omega5(3, 1), omega6(3, 1);//è½¬è½´
+		VectorXd xi1(6, 1), xi2(6, 1), xi3(6, 1), xi4(6, 1), xi5(6, 1), xi6(6, 1);                  //ÔË¶¯ÂİĞı
+		Vector3d omega1(3, 1), omega2(3, 1), omega3(3, 1), omega4(3, 1), omega5(3, 1), omega6(3, 1);//×ªÖá
 		Matrix4d g_st(4, 4);
 
-        // é€†è¿åŠ¨å­¦åˆå§‹ç‚¹èµ‹å€¼
-		q0_4 << 0, 0, 0,                 1;
-		q3_4 << 0, 0, L1 + L2 + L3,      1;
-		q1_4 << 0, 0, L1,                1;
-		q2_4 << 0, 0, L1 + L2,           1;
+		// ÄæÔË¶¯Ñ§³õÊ¼µã¸³Öµ
+		q0_4 << 0, 0, 0, 1;
+		q3_4 << 0, 0, L1 + L2 + L3, 1;
+		q1_4 << 0, 0, L1, 1;
+		q2_4 << 0, 0, L1 + L2, 1;
 		q4_4 << 0, 0, L1 + L2 + L3 + L4, 1;
 
-		// æ­£è¿åŠ¨å­¦åˆå§‹ç‚¹é€‰æ‹©
+		// ÕıÔË¶¯Ñ§³õÊ¼µãÑ¡Ôñ
 		Vector3d q0(3, 1), q1(3, 1), q2(3, 1), q3(3, 1);
 		q0 << 0, 0, 0;
 		q1 << 0, 0, L1;
 		q2 << 0, 0, L1 + L2;
 		q3 << 0, 0, L1 + L2 + L3;
 
-		// å˜æ¢çŸ©é˜µèµ‹å€¼
+		// ±ä»»¾ØÕó¸³Öµ
 		int k = 0;
 		for (int i = 0; i < 4; i++)
 		{
@@ -108,10 +72,10 @@ namespace HLRobot
 			}
 		}
 
-		//åˆå§‹ä½å‹èµ‹å€¼
+		//³õÊ¼Î»ĞÍ¸³Öµ
 		g_st0 << -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 1.475, 0, 0, 0, 1;
 
-		//è½¬è½´
+		//×ªÖá
 		omega1 << 0, 0, 1;
 		omega2 << 0, 1, 0;
 		omega3 << 0, 1, 0;
@@ -119,7 +83,7 @@ namespace HLRobot
 		omega5 << 0, 1, 0;
 		omega6 << 0, 0, 1;
 
-		//é€Ÿåº¦
+		//ËÙ¶È
 		v1 << -omega1.cross(q0);
 		v2 << -omega2.cross(q1);
 		v3 << -omega3.cross(q2);
@@ -127,7 +91,7 @@ namespace HLRobot
 		v5 << -omega5.cross(q3);
 		v6 << -omega6.cross(q0);
 
-		// è¿åŠ¨èºæ—‹èµ‹å€¼
+		// ÔË¶¯ÂİĞı¸³Öµ
 		xi1.block(0, 0, 3, 1) << v1;
 		xi1.block(3, 0, 3, 1) << omega1;
 		xi2.block(0, 0, 3, 1) << v2;
@@ -141,21 +105,21 @@ namespace HLRobot
 		xi6.block(0, 0, 3, 1) << v6;
 		xi6.block(3, 0, 3, 1) << omega6;
 
-		/********************************** æ±‚è§£ *******************************/
-		
+		/********************************** Çó½â *******************************/
+
 		Matrix4d G1(4, 4), G2(4, 4), G3(4, 4);
 		G1 << g_st * g_st0.inverse();
 		double delta;
 		Vector4d p, q, r;
 
-		// å­é—®é¢˜3æ±‚è§£Theta3
+		// ×ÓÎÊÌâ3Çó½âTheta3
 		delta = (G1 * q3_4 - q1_4).norm();
 		p << q3_4;
 		q << q1_4;
 		r << q2_4;
 		Subproblem3(theta, 2, xi3, p, q, r, delta);
 
-		// å­é—®é¢˜2æ±‚è§£Theta1ï¼ŒTheta2
+		// ×ÓÎÊÌâ2Çó½âTheta1£¬Theta2
 		Isometry3d g3 = Isometry3d::Identity();
 		AngleAxisd Omega3(theta[2], omega3);
 		g3.rotate(Omega3);
@@ -167,7 +131,7 @@ namespace HLRobot
 		r << q1_4;
 		Subproblem2(theta, 0, 1, xi1, xi2, p, q, r);
 
-		//å­é—®é¢˜3æ±‚theta5
+		//×ÓÎÊÌâ3Çótheta5
 		Isometry3d g1 = Isometry3d::Identity();
 		Isometry3d g2 = Isometry3d::Identity();
 		AngleAxisd Omega1(theta[0], omega1);
@@ -187,7 +151,7 @@ namespace HLRobot
 		r << q3_4;
 		Subproblem3(theta, 4, xi5, p, q, r, delta);
 
-		//å­é—®é¢˜1æ±‚è§£theta4
+		//×ÓÎÊÌâ1Çó½âtheta4
 		Isometry3d g5 = Isometry3d::Identity();
 		AngleAxisd Omega5(theta[4], omega5);
 		g5.rotate(Omega5);
@@ -199,7 +163,7 @@ namespace HLRobot
 		r << q0_4;
 		Subproblem1(theta, 3, xi4, p, q, r);
 
-		//å­é—®é¢˜1æ±‚è§£theta6
+		//×ÓÎÊÌâ1Çó½âtheta6
 		Isometry3d g4 = Eigen::Isometry3d::Identity();
 		AngleAxisd Omega4(theta[3], omega4);
 		g4.rotate(Omega4);
@@ -215,15 +179,15 @@ namespace HLRobot
 	}
 
 	/********************************************************************
-	ABSTRACT:	è¾“å…¥æœºå™¨äººçš„æœ«ç«¯ä½ç½®
+	ABSTRACT:	»úÆ÷ÈËÇ°ÏòÔË¶¯Ñ§
 
-	INPUTS:		q[6]: 6ä¸ªå…³èŠ‚è§’, å•ä½ä¸ºå¼§åº¦
-				Tool:å¯ä»¥å¿½ç•¥
+	INPUTS:		q[6]: 6¸ö¹Ø½Ú½Ç, µ¥Î»Îª»¡¶È
+				Tool:¿ÉÒÔºöÂÔ
 
-	OUTPUTS:	config[3]ï¼šå§¿æ€ï¼Œå…­è½´æœºå™¨äººå¯¹åº”æœ‰8ç§å§¿æ€ï¼Œä¸ºäº†å®‰å…¨ï¼Œ
-				å®éªŒå®¤ä¸­æˆ‘ä»¬åªè®¡ç®—ä¸€ç§å³å¯ï¼Œconfigåœ¨æ­£è¿åŠ¨å­¦ä¸­è¿›è¡Œäº†åˆå§‹åŒ–ï¼Œæ‰€ä»¥ä¸éœ€è¦è¿›è¡Œæ›´æ”¹ã€‚
-				Turns[6]ï¼šæ¯ä¸ªå…³èŠ‚å¯¹åº”çš„åœˆæ•°
-				TransVector[16] : åˆšä½“å˜æ¢çŸ©é˜µï¼Œä¹Ÿå°±æ˜¯æœ«ç«¯çš„ä½å§¿æè¿°ï¼Œå…¶ä¸­é•¿åº¦è·ç¦»ä¸ºç±³
+	OUTPUTS:	config[3]£º×ËÌ¬£¬ÁùÖá»úÆ÷ÈË¶ÔÓ¦ÓĞ8ÖÖ×ËÌ¬£¬ÎªÁË°²È«£¬
+				ÊµÑéÊÒÖĞÎÒÃÇÖ»¼ÆËãÒ»ÖÖ¼´¿É£¬configÔÚÕıÔË¶¯Ñ§ÖĞ½øĞĞÁË³õÊ¼»¯£¬ËùÒÔ²»ĞèÒª½øĞĞ¸ü¸Ä¡£
+				Turns[6]£ºÃ¿¸ö¹Ø½Ú¶ÔÓ¦µÄÈ¦Êı
+				TransVector[16] : ¸ÕÌå±ä»»¾ØÕó£¬Ò²¾ÍÊÇÄ©¶ËµÄÎ»×ËÃèÊö£¬ÆäÖĞ³¤¶È¾àÀëÎªÃ×
 
 	RETURN:		<none>
 	***********************************************************************/
@@ -232,9 +196,9 @@ namespace HLRobot
 		config[0] = 1; config[1] = 1; config[2] = 1;
 		turns[0] = 1; turns[1] = 1; turns[2] = 1; turns[3] = 1; turns[4] = 1; turns[5] = 1;
 
-		Vector3d q1, q2, q3, q4, q5, q6;                         //è½´ä¸Šç‚¹
-		Vector3d omega1, omega2, omega3, omega4, omega5, omega6; //è½¬è½´
-		MatrixXd Gst0(4, 4), Gst(4, 4);                          //å§‹æœ«ä½å‹
+		Vector3d q1, q2, q3, q4, q5, q6;                         //ÖáÉÏµã
+		Vector3d omega1, omega2, omega3, omega4, omega5, omega6; //×ªÖá
+		MatrixXd Gst0(4, 4), Gst(4, 4);                          //Ê¼Ä©Î»ĞÍ
 
 		omega1 << 0, 0, 1;
 		omega2 << 0, 1, 0;
@@ -264,7 +228,7 @@ namespace HLRobot
 		AngleAxisd Eomega5(q[4], Vector3d(0, 1, 0));
 		AngleAxisd Eomega6(q[5], Vector3d(0, 0, 1));
 
-		// ç½—å¾·é‡Œæ ¼æ–¯å…¬å¼
+		// Ö¸Êı¾ØÕóÓÒÉÏ½Ç
 		right1 = (I - Eomega1.matrix()) * omega1.cross(v1) + omega1 * omega1.transpose() * v1 * q[0];
 		right2 = (I - Eomega2.matrix()) * omega2.cross(v2) + omega2 * omega2.transpose() * v2 * q[1];
 		right3 = (I - Eomega3.matrix()) * omega3.cross(v3) + omega3 * omega3.transpose() * v3 * q[2];
@@ -272,7 +236,7 @@ namespace HLRobot
 		right5 = (I - Eomega5.matrix()) * omega5.cross(v5) + omega5 * omega5.transpose() * v5 * q[4];
 		right6 = (I - Eomega6.matrix()) * omega6.cross(v6) + omega6 * omega6.transpose() * v6 * q[5];
 
-		// æŒ‡æ•°ç§¯è®¡ç®—
+		// Ö¸Êı»ı¼ÆËã
 		Isometry3d e_xi1 = Isometry3d::Identity(), e_xi2 = Isometry3d::Identity(), e_xi3 = Isometry3d::Identity(), e_xi4 = Isometry3d::Identity(), e_xi5 = Isometry3d::Identity(), e_xi6 = Isometry3d::Identity();
 		e_xi1.rotate(Eomega1.matrix());
 		e_xi1.pretranslate(right1);
@@ -286,13 +250,13 @@ namespace HLRobot
 		e_xi5.pretranslate(right5);
 		e_xi6.rotate(Eomega6.matrix());
 		e_xi6.pretranslate(right6);
-		
+
 		Gst0 << -1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 1.475, 0, 0, 0, 1;
-		
-		//æœ€ç»ˆä½å‹
+
+		//×îÖÕÎ»ĞÍ
 		Gst = e_xi1.matrix() * e_xi2.matrix() * e_xi3.matrix() * e_xi4.matrix() * e_xi5.matrix() * e_xi6.matrix() * Gst0;
 
-		//èµ‹å€¼ç»™è¾“å‡ºæ•°ç»„Tran[]
+		//¸³Öµ¸øÊä³öÊı×éTran[]
 		int count = 0;
 		for (int i = 0; i < 4; ++i)
 		{
@@ -304,19 +268,19 @@ namespace HLRobot
 		}
 	}
 
-	/* 
-	 * å­é—®é¢˜1 
+	/*
+	 * ×ÓÎÊÌâ1
 	 */
 	bool Subproblem1(double* theta, const int index, const VectorXd& xi, const Vector4d& p_4, const Vector4d& q_4, const Vector4d& r_4)
 	{
-		// omega,åŠp,q,rä¸‰ç‚¹çš„åˆå§‹åŒ–
+		// omega,¼°p,q,rÈıµãµÄ³õÊ¼»¯
 		Vector3d omega(3, 1), p(3, 1), q(3, 1), r(3, 1);
 		omega << xi.block(3, 0, 3, 1);
 		p << p_4.block(0, 0, 3, 1);
 		q << q_4.block(0, 0, 3, 1);
 		r << r_4.block(0, 0, 3, 1);
 
-		// u,v,t,u_prime,v_prime äº”ä¸ªå‘é‡çš„åˆå§‹åŒ–
+		// u,v,t,u_prime,v_prime Îå¸öÏòÁ¿µÄ³õÊ¼»¯
 		Vector3d u(3, 1), v(3, 1), t(3, 1), u_prime(3, 1), v_prime(3, 1);
 		u << p - r;
 		v << q - r;
@@ -324,7 +288,7 @@ namespace HLRobot
 		u_prime << u - t;
 		v_prime << v - t;
 
-		// è®¡ç®—è¿‡ç¨‹
+		// ¼ÆËã¹ı³Ì
 		if (1)
 		{
 			if (u_prime.norm() == 0)
@@ -349,11 +313,11 @@ namespace HLRobot
 	}
 
 	/*
-	 * å­é—®é¢˜2
+	 * ×ÓÎÊÌâ2
 	*/
 	bool Subproblem2(double* theta, const int index1, const int index2, const VectorXd& xi1, const VectorXd& xi2, const Vector4d& p_4, const Vector4d& q_4, const Vector4d& r_4)
 	{
-		// omega1, omega2 åŠp,q,rä¸‰ç‚¹çš„åˆå§‹åŒ–
+		// omega1, omega2 ¼°p,q,rÈıµãµÄ³õÊ¼»¯
 		Vector3d omega1(3, 1), omega2(3, 1), p(3, 1), q(3, 1), r(3, 1);
 		omega1 << xi1.block(3, 0, 3, 1);
 		omega2 << xi2.block(3, 0, 3, 1);
@@ -361,9 +325,9 @@ namespace HLRobot
 		q << q_4.block(0, 0, 3, 1);
 		r << r_4.block(0, 0, 3, 1);
 
-		// u,v ä¸¤ä¸ªå‘é‡ä»¥åŠalpha,betaçš„åˆå§‹åŒ–
+		// u,v Á½¸öÏòÁ¿ÒÔ¼°alpha,betaµÄ³õÊ¼»¯
 		Vector3d u(3, 1), v(3, 1);
-		double alpha, beta, temp, temp1, temp4, temp3;             // temp,temp1,temp2,temp3ä¸ºä¸­é—´è¿ç®—å˜é‡
+		double alpha, beta, temp, temp1, temp4, temp3;             // temp,temp1,temp2,temp3ÎªÖĞ¼äÔËËã±äÁ¿
 		u << p - r;
 		v << q - r;
 		temp = omega1.transpose() * omega2;
@@ -373,7 +337,7 @@ namespace HLRobot
 		beta = (temp * temp3 - temp4) / (temp * temp - 1);
 		temp1 = u.squaredNorm() - alpha * alpha - beta * beta - 2 * alpha * beta * temp;
 
-		// è®¡ç®—è¿‡ç¨‹
+		// ¼ÆËã¹ı³Ì
 		if (temp1 < 0)
 		{
 			cout << "There is no solution for Subproblem2 !!!\t\t\t The angles are theta" << index1 + 1 << " and theta" << index2 + 1 << " !" << endl;
@@ -405,34 +369,34 @@ namespace HLRobot
 	}
 
 	/*
-	* å­é—®é¢˜3
+	* ×ÓÎÊÌâ3
 	*/
 	bool Subproblem3(double* theta, const int index, const VectorXd& xi, const Vector4d& p_4, const Vector4d& q_4, const Vector4d& r_4, const double delta)
 	{
-		// omega,åŠp,q,rä¸‰ç‚¹çš„åˆå§‹åŒ–
+		// omega,¼°p,q,rÈıµãµÄ³õÊ¼»¯
 		Vector3d omega(3, 1), p(3, 1), q(3, 1), r(3, 1);
 		omega << xi.block(3, 0, 3, 1);
 		p << p_4.block(0, 0, 3, 1);
 		q << q_4.block(0, 0, 3, 1);
 		r << r_4.block(0, 0, 3, 1);
 
-		// u,v,u_prime,v_prime å››ä¸ªå‘é‡çš„åˆå§‹åŒ–
+		// u,v,u_prime,v_prime ËÄ¸öÏòÁ¿µÄ³õÊ¼»¯
 		Vector3d u(3, 1), v(3, 1), t(3, 1), u_prime(3, 1), v_prime(3, 1);
 		u << p - r;
 		v << q - r;
 		u_prime << u - u.transpose() * omega * omega;
 		v_prime << v - v.transpose() * omega * omega;
 
-		// theta0,delta_prime_squå‚æ•°çš„åˆå§‹åŒ–
+		// theta0,delta_prime_squ²ÎÊıµÄ³õÊ¼»¯
 		double theta0, delta_prime_squ;
 		theta0 = atan2(omega.transpose() * (u_prime.cross(v_prime)), u_prime.transpose() * v_prime);
 		delta_prime_squ = delta * delta - (omega.transpose() * (p - q)).squaredNorm();
 
-		// ä¸­é—´å˜é‡temp
+		// ÖĞ¼ä±äÁ¿temp
 		double temp = u_prime.squaredNorm() + v_prime.squaredNorm() - delta_prime_squ;
 		temp = temp / (2 * u_prime.norm() * v_prime.norm());
 
-		// è®¡ç®—è¿‡ç¨‹
+		// ¼ÆËã¹ı³Ì
 		if (abs(temp) > 1)
 		{
 			cout << "There is no solution for Subproblem3 !!!\t\t\t The angle is theta" << index + 1 << " !" << endl;
@@ -448,6 +412,11 @@ namespace HLRobot
 
 	}
 
+	/*
+	 * brief£ºÄ¬ÈÏÇé¿öÏÂµÄÄæ½â
+	 * param£º*EMatrix ¸ÕÌå±ä»»¾ØÕó
+	 *        *angle   ÇóµÃµÄ¹Ø½Ú½Ç
+	 */
 	void GetJointAngles(double* EMatrix, double* angle)
 	{
 		bool config[3] = { 1,1,1 };
@@ -460,7 +429,4 @@ namespace HLRobot
 			angle[i] = theta[i] * 180 / PI;
 		}
 	}
-
 }
-
-
