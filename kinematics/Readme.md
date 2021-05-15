@@ -1,4 +1,4 @@
-# Dynamics
+# kinematics
 
 ## Brief
 
