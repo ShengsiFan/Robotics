@@ -1,5 +1,5 @@
 # Robotics
- Code of Robotics programming honmework
+ Code of Robotics programming homework
 
 ## Brief
 
